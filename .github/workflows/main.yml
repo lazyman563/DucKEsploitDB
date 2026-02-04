@@ -1,20 +1,12 @@
-name: Forge Sacred Database
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
+name: Forge
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+      - uses: actions/checkout@v3
       - name: Build
         run: |
           git clone https://github.com/AntiRootkit/exploit-database sd
@@ -28,14 +20,13 @@ with open('sd/files_exploits.csv', mode='r', encoding='utf-8') as f:
     data = [(i['id'], i['file'], i['description'], i['date'], i['author'], i['platform'], i['type'], i['port']) for i in r]
 cursor.executemany('INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);', data)
 c.commit()
-c.close()
-"
-      - name: Deploy
+c.close()"
+      - name: Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           mkdir -p data
           mv duck_base.db data/
           git add data/duck_base.db
-          git commit -m "Sacred Forge Update" || exit 0
+          git commit -m "Forge Update" || exit 0
           git push
