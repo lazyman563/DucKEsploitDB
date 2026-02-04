@@ -20,13 +20,18 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Clone Arsenal Source
+        run: |
+          # Clona o repo de exploits para ter os dados reais
+          git clone https://github.com/AntiRootkit/exploit-database source_data
+          # Move o CSV principal para onde o seu script espera
+          cp source_data/files_exploits.csv exploits.csv
+
       - name: Run Database Forge
         run: |
-          # Baixa a fonte sagrada
-          curl -L https://raw.githubusercontent.com/offensive-security/exploitdb/master/files_exploits.csv -o exploits.csv
-          # Roda o script (ele deve ler o exploits.csv local agora)
+          # Roda o script usando o CSV clonado
           python duckesploit/core/db.py
-          # Puxa o .db gerado para a raiz
+          # Garante que o .db vá para a raiz
           find . -name "*.db" -exec mv {} . \;
 
       - name: Commit and Push Database
