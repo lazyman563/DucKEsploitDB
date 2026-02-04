@@ -20,30 +20,34 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
-        run: |
-          pip install pandas requests
-
       - name: Clone Arsenal Source
         run: |
           git clone https://github.com/AntiRootkit/exploit-database source_data
           cp source_data/files_exploits.csv exploits.csv
-          # Debug: Mostrar se o arquivo existe e o tamanho
-          ls -lh exploits.csv
 
       - name: Run Database Forge
         run: |
-          # Executa o script e captura erros
-          python duckesploit/core/db.py || echo "PYTHON_FAILED"
-          # Debug: Ver se o .db apareceu em algum lugar
-          find . -name "*.db"
+          # Criando o script de forja no voo
+          cat <<'INNEREOF' > forge_db.py
+import sqlite3, csv
+conn = sqlite3.connect('duck_base.db')
+cursor = conn.cursor()
+cursor.execute('CREATE TABLE IF NOT EXISTS exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)')
+with open('exploits.csv', mode='r', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    to_db = [(r['id'], r['file'], r['description'], r['date'], r['author'], r['platform'], r['type'], r['port']) for r in reader]
+cursor.executemany('INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);', to_db)
+conn.commit()
+conn.close()
+INNEREOF
+          python forge_db.py
 
       - name: Commit and Push Database
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Move qualquer .db achado para a raiz
-          find . -name "*.db" -exec mv {} . \;
-          git add *.db
+          mkdir -p data
+          mv duck_base.db data/
+          git add data/duck_base.db
           git commit -m "Arsenal update: $(date +'%Y-%m-%d')" || exit 0
           git push
