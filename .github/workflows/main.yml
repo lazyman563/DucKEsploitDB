@@ -1,5 +1,8 @@
 name: Forge
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -7,26 +10,15 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
-      - name: Build
+      - name: Create DB
         run: |
           git clone https://github.com/AntiRootkit/exploit-database sd
-          python3 -c "
-import sqlite3, csv
-c = sqlite3.connect('duck_base.db')
-cursor = c.cursor()
-cursor.execute('CREATE TABLE IF NOT EXISTS exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)')
-with open('sd/files_exploits.csv', mode='r', encoding='utf-8') as f:
-    r = csv.DictReader(f)
-    data = [(i['id'], i['file'], i['description'], i['date'], i['author'], i['platform'], i['type'], i['port']) for i in r]
-cursor.executemany('INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);', data)
-c.commit()
-c.close()"
+          python3 -c "import sqlite3, csv; c = sqlite3.connect('duck_base.db'); cursor = c.cursor(); cursor.execute('CREATE TABLE exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)'); f = open('sd/files_exploits.csv', 'r', encoding='utf-8'); r = csv.DictReader(f); data = [(i['id'], i['file'], i['description'], i['date'], i['author'], i['platform'], i['type'], i['port']) for i in r]; cursor.executemany('INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);', data); c.commit(); c.close()"
       - name: Push
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          mkdir -p data
-          mv duck_base.db data/
+          git config --local user.email 'action@github.com'
+          git config --local user.name 'GitHub Action'
+          mkdir -p data && mv duck_base.db data/
           git add data/duck_base.db
-          git commit -m "Forge Update" || exit 0
-          git push
+          git commit -m 'Update' || exit 0
+          git push origin main
