@@ -22,13 +22,17 @@ jobs:
 
       - name: Run Database Forge
         run: |
-          # Usando o caminho que você realmente subiu
+          # Baixa a fonte sagrada
+          curl -L https://raw.githubusercontent.com/offensive-security/exploitdb/master/files_exploits.csv -o exploits.csv
+          # Roda o script (ele deve ler o exploits.csv local agora)
           python duckesploit/core/db.py
+          # Puxa o .db gerado para a raiz
+          find . -name "*.db" -exec mv {} . \;
 
       - name: Commit and Push Database
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add *.db || echo "Nenhum banco gerado ainda"
+          git add *.db
           git commit -m "Arsenal update: $(date +'%Y-%m-%d')" || exit 0
           git push
