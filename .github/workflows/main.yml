@@ -1,15 +1,15 @@
 name: Forge Sacred Database
 
 on:
-  schedule:
-    - cron: '0 0 1 * *'
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # ESSENCIAL para o robô poder dar push
+      contents: write
 
     steps:
       - name: Checkout Repo
@@ -22,14 +22,13 @@ jobs:
 
       - name: Run Database Forge
         run: |
-          # Se o script está em duckesploit/core/db.py, chame ele pelo caminho certo!
+          # Usando o caminho que você realmente subiu
           python duckesploit/core/db.py
 
       - name: Commit and Push Database
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Adiciona o que quer que o seu script gere (ajuste o nome se não for duck_base.db)
-          git add *.db || echo "Nenhum DB encontrado"
+          git add *.db || echo "Nenhum banco gerado ainda"
           git commit -m "Arsenal update: $(date +'%Y-%m-%d')" || exit 0
           git push
