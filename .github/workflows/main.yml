@@ -1,0 +1,36 @@
+name: Forge Sacred Database
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # Meia-noite de todo dia 1º
+  workflow_dispatch:      # Para você apertar o botão agora e forjar o primeiro .db
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Create Data Directory
+        run: mkdir -p data
+
+      - name: Run Database Forge
+        run: |
+          # O setup_db.py deve estar na raiz ou na pasta scripts/
+          python setup_db.py 
+
+      - name: Commit and Push Database
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/duck_base.db
+          # O '|| exit 0' evita que o Action falhe se não houver exploits novos
+          git commit -m "Arsenal update: $(date +'%Y-%m-%d')" || exit 0
+          git push
