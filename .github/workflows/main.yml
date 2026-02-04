@@ -20,24 +20,30 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Install Dependencies
+        run: |
+          pip install pandas requests
+
       - name: Clone Arsenal Source
         run: |
-          # Clona o repo de exploits para ter os dados reais
           git clone https://github.com/AntiRootkit/exploit-database source_data
-          # Move o CSV principal para onde o seu script espera
           cp source_data/files_exploits.csv exploits.csv
+          # Debug: Mostrar se o arquivo existe e o tamanho
+          ls -lh exploits.csv
 
       - name: Run Database Forge
         run: |
-          # Roda o script usando o CSV clonado
-          python duckesploit/core/db.py
-          # Garante que o .db vá para a raiz
-          find . -name "*.db" -exec mv {} . \;
+          # Executa o script e captura erros
+          python duckesploit/core/db.py || echo "PYTHON_FAILED"
+          # Debug: Ver se o .db apareceu em algum lugar
+          find . -name "*.db"
 
       - name: Commit and Push Database
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          # Move qualquer .db achado para a raiz
+          find . -name "*.db" -exec mv {} . \;
           git add *.db
           git commit -m "Arsenal update: $(date +'%Y-%m-%d')" || exit 0
           git push
