@@ -21,24 +21,24 @@ jobs:
           cp source_data/files_exploits.csv exploits.csv
       - name: Run Database Forge
         run: |
-          python -c "
+          python3 -c "
 import sqlite3, csv
-conn = sqlite3.connect(\"duck_base.db\")
+conn = sqlite3.connect("duck_base.db")
 cursor = conn.cursor()
-cursor.execute(\"CREATE TABLE IF NOT EXISTS exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)\")
-with open(\"exploits.csv\", mode=\"r\", encoding=\"utf-8\") as f:
+cursor.execute("CREATE TABLE IF NOT EXISTS exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)")
+with open("exploits.csv", mode="r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
-    to_db = [(r[\"id\"], r[\"file\"], r[\"description\"], r[\"date\"], r[\"author\"], r[\"platform\"], r[\"type\"], r[\"port\"]) for r in reader]
-cursor.executemany(\"INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);\", to_db)
+    to_db = [(r["id"], r["file"], r["description"], r["date"], r["author"], r["platform"], r["type"], r["port"]) for r in reader]
+cursor.executemany("INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);", to_db)
 conn.commit()
 conn.close()
 "
       - name: Commit and Push Database
         run: |
-          git config --local user.email \"action@github.com\"
-          git config --local user.name \"GitHub Action\"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           mkdir -p data
           mv duck_base.db data/
           git add data/duck_base.db
-          git commit -m \"Arsenal updated\" || exit 0
+          git commit -m "Arsenal updated" || exit 0
           git push
