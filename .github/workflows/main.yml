@@ -9,36 +9,33 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout Repo
+      - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Clone Arsenal Source
+      - name: Build
         run: |
-          git clone https://github.com/AntiRootkit/exploit-database source_data
-          cp source_data/files_exploits.csv exploits.csv
-      - name: Run Database Forge
-        run: |
+          git clone https://github.com/AntiRootkit/exploit-database sd
           python3 -c "
 import sqlite3, csv
-conn = sqlite3.connect("duck_base.db")
-cursor = conn.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)")
-with open("exploits.csv", mode="r", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    to_db = [(r["id"], r["file"], r["description"], r["date"], r["author"], r["platform"], r["type"], r["port"]) for r in reader]
-cursor.executemany("INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);", to_db)
-conn.commit()
-conn.close()
+c = sqlite3.connect('duck_base.db')
+cursor = c.cursor()
+cursor.execute('CREATE TABLE IF NOT EXISTS exploits (id INTEGER PRIMARY KEY, file TEXT, description TEXT, date TEXT, author TEXT, platform TEXT, type TEXT, port INTEGER)')
+with open('sd/files_exploits.csv', mode='r', encoding='utf-8') as f:
+    r = csv.DictReader(f)
+    data = [(i['id'], i['file'], i['description'], i['date'], i['author'], i['platform'], i['type'], i['port']) for i in r]
+cursor.executemany('INSERT INTO exploits VALUES (?,?,?,?,?,?,?,?);', data)
+c.commit()
+c.close()
 "
-      - name: Commit and Push Database
+      - name: Deploy
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           mkdir -p data
           mv duck_base.db data/
           git add data/duck_base.db
-          git commit -m "Arsenal updated" || exit 0
+          git commit -m "Sacred Forge Update" || exit 0
           git push
